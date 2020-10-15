@@ -1,5 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser');
+const ObjectId = require('mongodb').ObjectId;
 const cors = require('cors');
 const admin = require('firebase-admin');
 const fileUpload = require('express-fileupload')
@@ -64,17 +65,7 @@ app.get('/', (req, res) => {
     const author = req.body.author;
     const designation = req.body.designation;
     const description = req.body.description;
-    const authorImg = req.body.authorImg;
-    // const file = req.files.file;
-
-    // const newImg = file.data;
-    //     const encImg = newImg.toString('base64');
-
-    //     var authorImg = {
-    //         contentType: file.mimetype,
-    //         size: file.size,
-    //         img: Buffer.from(encImg, 'base64')
-    //     };    
+    const authorImg = req.body.authorImg;   
     reviewCollection.insertOne({ author,designation, description, authorImg })
       .then(result => {
         res.send(result.insertedCount > 0);
@@ -103,6 +94,7 @@ app.get('/', (req, res) => {
       const orderName =req.body.orderName;   
       const authorImg =req.body.authorImg;      
       const description =req.body.description;   
+      const status = 'Pending';
       console.log(name, email, file, authorImg, description)
 
       const newImg = file.data;
@@ -113,7 +105,7 @@ app.get('/', (req, res) => {
             size: file.size,
             img: Buffer.from(encImg, 'base64')
         };
-        orderCollection.insertOne({ name, email, orderName, projectDetails, image, authorImg, description })
+        orderCollection.insertOne({ name, email, orderName, projectDetails, image, authorImg, description, status })
             .then(result => {
                 res.send(result.insertedCount > 0);
             })
@@ -165,12 +157,17 @@ app.get('/', (req, res) => {
     }
     else {
       res.status(401).send('Un authorized access')
-    }
+    }   
+  })
 
-    // orderCollection.find({})
-    //   .toArray((err, documents) => {
-    //     res.send(documents);
-    //   })
+  app.patch('/update/:id', (req, res) => {
+    orderCollection.updateOne({_id: ObjectId(req.params.id)},
+    {
+      $set: {status: req.body.status}
+    })
+    .then (result => {
+      res.send(result.modifiedCount > 0)
+    })
   })
 
   
