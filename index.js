@@ -30,11 +30,11 @@ app.use(fileUpload());
 const port = 5000;
 
 app.get('/', (req, res) => {
-    res.send('Hello from db its working working')
-  })
+  res.send('Hello from db its working working')
+})
 
-  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-  client.connect(err => {
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+client.connect(err => {
   const serviceCollection = client.db("egency").collection("services");
   const reviewCollection = client.db("egency").collection("reviews");
   const orderCollection = client.db("egency").collection("orders");
@@ -48,13 +48,13 @@ app.get('/', (req, res) => {
     const description = req.body.description;
     const file = req.files.file;
     const newImg = file.data;
-        const encImg = newImg.toString('base64');
+    const encImg = newImg.toString('base64');
 
-        var authorImg = {
-            contentType: file.mimetype,
-            size: file.size,
-            img: Buffer.from(encImg, 'base64')
-        };    
+    var authorImg = {
+      contentType: file.mimetype,
+      size: file.size,
+      img: Buffer.from(encImg, 'base64')
+    };
     serviceCollection.insertOne({ title, description, authorImg })
       .then(result => {
         res.send(result.insertedCount > 0);
@@ -65,8 +65,8 @@ app.get('/', (req, res) => {
     const author = req.body.author;
     const designation = req.body.designation;
     const description = req.body.description;
-    const authorImg = req.body.authorImg;   
-    reviewCollection.insertOne({ author,designation, description, authorImg })
+    const authorImg = req.body.authorImg;
+    reviewCollection.insertOne({ author, designation, description, authorImg })
       .then(result => {
         res.send(result.insertedCount > 0);
       })
@@ -86,29 +86,37 @@ app.get('/', (req, res) => {
       })
   })
 
-  app.post('/addOrders',(req, res) => {
+  app.post('/addOrders', (req, res) => {
+    const name = req.body.name;
+    const email = req.body.email;
+    const projectDetails = req.body.projectDetails;
+    const orderName = req.body.orderName;
+    const price = req.body.price;
+    const authorImg = req.body.authorImg;
+    const description = req.body.description;
+    const status = 'Pending';
+    console.log(req.files)
+    if (req.files) {
       const file = req.files.file;
-      const name = req.body.name;
-      const email =req.body.email;
-      const projectDetails = req.body.projectDetails;
-      const orderName =req.body.orderName;   
-      const authorImg =req.body.authorImg;      
-      const description =req.body.description;   
-      const status = 'Pending';
-      console.log(name, email, file, authorImg, description)
-
       const newImg = file.data;
-        const encImg = newImg.toString('base64');
+      const encImg = newImg.toString('base64');
+      var image = {
+        contentType: file.mimetype,
+        size: file.size,
+        img: Buffer.from(encImg, 'base64')
+      };
+      orderCollection.insertOne({ name, email, orderName, price, projectDetails, image, authorImg, description, status })
+        .then(result => {
+          res.send(result.insertedCount > 0);
+        })
+    }
+    else {
+      orderCollection.insertOne({ name, email, orderName, price, projectDetails, authorImg, description, status })
+        .then(result => {
+          res.send(result.insertedCount > 0);
+        })
+    }
 
-        var image = {
-            contentType: file.mimetype,
-            size: file.size,
-            img: Buffer.from(encImg, 'base64')
-        };
-        orderCollection.insertOne({ name, email, orderName, projectDetails, image, authorImg, description, status })
-            .then(result => {
-                res.send(result.insertedCount > 0);
-            })
   })
 
   app.post('/addAdmin', (req, res) => {
@@ -116,7 +124,6 @@ app.get('/', (req, res) => {
     console.log(admin)
     adminCollection.insertOne(admin)
       .then(result => {
-        
         res.send(result.insertedCount > 0);
       })
   })
@@ -124,14 +131,15 @@ app.get('/', (req, res) => {
   app.post('/isAdmin', (req, res) => {
     const email = req.body.email;
     adminCollection.find({ email: email })
-        .toArray((err, admin) => {
-            res.send(admin.length > 0);
-        })
-})
+      .toArray((err, admin) => {
+        res.send(admin.length > 0);
+      })
+  })
 
   app.get('/orders', (req, res) => {
     const bearer = req.headers.authorization;
     // const email = req.body.email;
+    console.log(bearer);
     if (bearer && bearer.startsWith('Bearer ')) {
       const idToken = bearer.split(' ')[1];
       admin.auth().verifyIdToken(idToken)
@@ -149,28 +157,28 @@ app.get('/', (req, res) => {
           res.status(401).send('Un authorized access')
         });
     }
-    else if(bearer){
-          orderCollection.find({})
-          .toArray((err, documents) => {
+    else if (bearer) {
+      orderCollection.find({})
+        .toArray((err, documents) => {
           res.send(documents);
         })
     }
     else {
       res.status(401).send('Un authorized access')
-    }   
+    }
   })
 
   app.patch('/update/:id', (req, res) => {
-    orderCollection.updateOne({_id: ObjectId(req.params.id)},
-    {
-      $set: {status: req.body.status}
-    })
-    .then (result => {
-      res.send(result.modifiedCount > 0)
-    })
+    orderCollection.updateOne({ _id: ObjectId(req.params.id) },
+      {
+        $set: { status: req.body.status }
+      })
+      .then(result => {
+        res.send(result.modifiedCount > 0)
+      })
   })
 
-  
+
 });
 
-  app.listen(process.env.PORT || port)
+app.listen(process.env.PORT || port)
