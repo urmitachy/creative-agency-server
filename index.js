@@ -138,7 +138,6 @@ client.connect(err => {
 
   app.get('/orders', (req, res) => {
     const bearer = req.headers.authorization;
-    // const email = req.body.email;
     console.log(bearer);
     if (bearer && bearer.startsWith('Bearer ')) {
       const idToken = bearer.split(' ')[1];
